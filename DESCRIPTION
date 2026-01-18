@@ -3,8 +3,8 @@ Type: Package
 Title: Schema Validation and Recipe Construction for Consumer Psychology Research
 Version: 0.1.0
 Authors@R: c(
-    person("Niche", "Contributors", role = c("aut", "cre"),
-           email = "niche@example.com")
+    person("Josh", "Gonzales", role = c("aut", "cre"),
+           email = "jgonza10@uoguelph.ca")
     )
 Description: Provides spec-first workflow infrastructure for consumer psychology
     research. Parses and validates YAML/JSON specification files, constructs

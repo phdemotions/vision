@@ -19,7 +19,7 @@ test_that("validate_spec fails on missing top-level field", {
 
   expect_error(
     validate_spec(spec),
-    "spec\\$vars"
+    "Missing required top-level field"
   )
 })
 
@@ -41,7 +41,7 @@ test_that("validate_spec fails on invalid meta$title", {
 
   expect_error(
     validate_spec(spec),
-    "spec\\$meta\\$title"
+    "Invalid meta\\$title"
   )
 })
 
@@ -63,7 +63,7 @@ test_that("validate_spec fails on missing meta$authors", {
 
   expect_error(
     validate_spec(spec),
-    "spec\\$meta\\$authors"
+    "Missing required field"
   )
 })
 
@@ -151,7 +151,7 @@ test_that("validate_spec fails on scale missing required field", {
 
   expect_error(
     validate_spec(spec),
-    "spec\\$scales\\[\\[1\\]\\]\\$min_items"
+    "Missing required scale field"
   )
 })
 
@@ -178,7 +178,7 @@ test_that("validate_spec fails on model missing required field", {
 
   expect_error(
     validate_spec(spec),
-    "spec\\$models\\[\\[1\\]\\]\\$formula"
+    "Invalid model formula"
   )
 })
 
@@ -200,6 +200,6 @@ test_that("validate_spec fails on invalid outputs$root", {
 
   expect_error(
     validate_spec(spec),
-    "spec\\$outputs\\$root"
+    "Invalid outputs\\$root"
   )
 })

@@ -15,7 +15,7 @@ You can install the development version of vision from GitHub:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("username/vision")
+devtools::install_github("phdemotions/vision")
 ```
 
 ## Minimal Example
