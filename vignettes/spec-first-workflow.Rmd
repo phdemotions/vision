@@ -1,0 +1,238 @@
+---
+title: "Spec-first workflow with vision"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Spec-first workflow with vision}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(vision)
+```
+
+## Introduction
+
+`vision` enables spec-first workflows for consumer psychology research. Instead of writing analysis code first, you define your complete study specification in a YAML or JSON file. `vision` then validates this specification and constructs an auditable analysis recipe.
+
+This approach ensures:
+
+- **Reproducibility**: All analysis decisions are recorded before touching data
+- **Auditability**: Complete audit trail from specification to results
+- **Peer-review readiness**: Specifications serve as transparent documentation
+
+## Schema v0.1.0
+
+`vision` validates specifications against schema version 0.1.0. This schema requires seven top-level sections:
+
+### Required Sections
+
+1. **meta**: Study metadata
+   - `title`: Study title (character)
+   - `authors`: Author list (character vector or list)
+   - `created`: Creation date (character or Date)
+
+2. **data**: Data source configuration
+   - `sources`: File paths (character vector)
+   - `id`: ID column name (character)
+   - `joins`: Join specifications (optional list)
+
+3. **vars**: Variable specifications
+   - `rename`: Variable renaming map (optional named character vector)
+   - `types`: Variable types (named character vector with values: "character", "double", "integer", "logical", "factor", "date", "datetime")
+
+4. **rules**: Data processing rules
+   - `exclusions`: Exclusion criteria (optional list)
+   - `missingness`: Missingness handling (optional list)
+
+5. **scales**: Scale definitions
+   - Each scale has: `name`, `items`, `reverse` (optional), `min_items`, `composite`
+
+6. **models**: Statistical model specifications
+   - Each model has: `name`, `formula`, `family` (optional), `robust` (optional)
+
+7. **outputs**: Output configuration
+   - `root`: Output directory path (character)
+   - `render`: Rendering specifications (optional list)
+
+## Workflow
+
+### 1. Create a template
+
+Start by generating a minimal template:
+
+```{r template}
+template_path <- tempfile(fileext = ".yml")
+write_spec_template(template_path)
+```
+
+The template includes all required sections with commented examples:
+
+```{r show_template, comment=''}
+cat(readLines(template_path), sep = "\n")
+```
+
+### 2. Read the specification
+
+Parse the YAML file into a `niche_spec` object:
+
+```{r read}
+spec <- read_spec(template_path)
+class(spec)
+```
+
+If the specification file doesn't include a `schema_version` field, `read_spec()` automatically sets it to the current version.
+
+### 3. Validate the specification
+
+Validate against schema v0.1.0 requirements:
+
+```{r validate}
+spec <- validate_spec(spec)
+```
+
+Validation checks:
+
+- All required top-level fields exist
+- All required subfields exist and have correct types
+- Variable types use allowed values
+- Scales and models have required fields
+
+Validation is **structural**, not semantic—it ensures the specification is well-formed but doesn't verify that variable names exist in data or that formulas are valid R syntax.
+
+### 4. Build a recipe
+
+Construct an auditable recipe from the validated specification:
+
+```{r build}
+recipe <- build_recipe(spec)
+class(recipe)
+```
+
+The recipe includes:
+
+- **spec_hash**: Deterministic hash of the canonicalized specification
+- **defaults_applied**: Tracking of all applied default values
+- **outputs**: Created output directory structure
+- **created**: ISO-8601 timestamp
+
+### 5. Write the recipe
+
+Serialize the recipe to canonical JSON:
+
+```{r write, eval=FALSE}
+recipe_path <- write_recipe(recipe)
+recipe_path
+```
+
+By default, the recipe is written to `outputs/audit/recipe.json`. You can specify a custom path:
+
+```{r write_custom, eval=FALSE}
+custom_path <- file.path(tempdir(), "my_recipe.json")
+write_recipe(recipe, path = custom_path)
+```
+
+## Deterministic Hashing
+
+`build_recipe()` canonicalizes specifications before hashing to ensure determinism:
+
+```{r hash_demo}
+# Create two equivalent specs with different ordering
+spec1 <- spec
+spec2 <- spec
+
+# Different variable ordering
+spec1$vars$types <- c(participant_id = "character", age = "integer")
+spec2$vars$types <- c(age = "integer", participant_id = "character")
+
+# Different author format
+spec1$meta$authors <- c("Author 1", "Author 2")
+spec2$meta$authors <- list("Author 1", "Author 2")
+
+# Build recipes
+recipe1 <- build_recipe(spec1)
+recipe2 <- build_recipe(spec2)
+
+# Hashes are identical
+identical(recipe1$spec_hash, recipe2$spec_hash)
+```
+
+Canonicalization includes:
+
+- Converting `meta$authors` lists to character vectors
+- Sorting `vars$rename` and `vars$types` by name
+- Sorting `scales` and `models` by name
+- Ensuring `reverse` fields exist (as `character(0)` if missing)
+
+## Default Tracking
+
+`build_recipe()` tracks all applied defaults:
+
+```{r defaults_demo}
+# Create minimal spec (many optional fields missing)
+minimal_spec <- spec
+minimal_spec$data$joins <- NULL
+minimal_spec$vars$rename <- NULL
+minimal_spec$rules$exclusions <- NULL
+minimal_spec$rules$missingness <- NULL
+minimal_spec$outputs$render <- NULL
+
+recipe_minimal <- build_recipe(minimal_spec)
+names(recipe_minimal$defaults_applied)
+```
+
+Defaults are applied ONLY to optional fields and recorded with their exact field paths.
+
+## Error Messages
+
+`vision` provides actionable error messages for specification problems:
+
+```{r error_demo, error=TRUE}
+# Missing required field
+bad_spec <- spec
+bad_spec$meta$title <- NULL
+
+validate_spec(bad_spec)
+```
+
+```{r error_demo2, error=TRUE}
+# Invalid variable type
+bad_spec2 <- spec
+bad_spec2$vars$types <- c(participant_id = "invalid_type")
+
+validate_spec(bad_spec2)
+```
+
+All errors include:
+
+- What failed
+- Where it failed (exact field path)
+- How to fix it
+
+## Next Steps
+
+`vision` prepares auditable recipes but does not execute analyses. For complete workflows:
+
+- Use `nicheData` (future) for data ingestion
+- Use `nicheScales` (future) for scale scoring
+- Use `nicheModels` (future) for statistical modeling
+- Use `nicheReport` (future) for APA-formatted outputs
+
+The `niche` meta-package will provide a unified interface to the complete workflow.
+
+## Cleanup
+
+```{r cleanup, include=FALSE, eval=FALSE}
+# Clean up temporary files
+# Note: Some paths may not exist if chunks were not evaluated
+if (exists("template_path")) unlink(template_path)
+if (exists("custom_path")) unlink(custom_path)
+if (exists("recipe_path")) unlink(dirname(recipe_path), recursive = TRUE)
+```

@@ -1,0 +1,23 @@
+schema_version: "0.1.0"
+
+meta:
+  title: "Intentionally Invalid Spec"
+  # Missing required 'authors' field
+
+data:
+  sources:
+    - "data/survey.csv"
+  # Missing required 'id' field
+
+vars:
+  types:
+    respondent_id: invalid_type
+
+rules: {}
+
+scales: []
+
+models: []
+
+outputs:
+  root: "outputs"

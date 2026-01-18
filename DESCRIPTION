@@ -1,0 +1,27 @@
+Package: vision
+Type: Package
+Title: Schema Validation and Recipe Construction for Consumer Psychology Research
+Version: 0.1.0
+Authors@R: c(
+    person("Niche", "Contributors", role = c("aut", "cre"),
+           email = "niche@example.com")
+    )
+Description: Provides spec-first workflow infrastructure for consumer psychology
+    research. Parses and validates YAML/JSON specification files, constructs
+    auditable analysis recipes, and enforces schema compliance without performing
+    data ingestion, modeling, or reporting. Part of the 'niche' R universe for
+    reproducible consumer research.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    nicheCore,
+    jsonlite,
+    yaml
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Config/testthat/edition: 3

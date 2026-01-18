@@ -1,0 +1,47 @@
+schema_version: "0.1.0"
+
+meta:
+  title: "Example Consumer Study"
+  authors:
+    - "Jane Researcher"
+    - "John Analyst"
+  created: "2026-01-15"
+
+data:
+  sources:
+    - "data/main_survey.csv"
+  id: "respondent_id"
+
+vars:
+  rename:
+    Q1: brand_attitude_1
+    Q2: brand_attitude_2
+  types:
+    respondent_id: character
+    age: integer
+    condition: factor
+    brand_attitude_1: double
+    brand_attitude_2: double
+    purchase_intent: double
+
+rules:
+  exclusions:
+    - condition: "age < 18"
+      reason: "underage"
+
+scales:
+  - name: brand_attitude
+    items:
+      - brand_attitude_1
+      - brand_attitude_2
+    reverse: []
+    min_items: 1
+    composite: mean
+
+models:
+  - name: main_effect
+    formula: "purchase_intent ~ condition"
+    family: gaussian
+
+outputs:
+  root: "outputs"
